@@ -47,6 +47,7 @@
     let isProcessingTouch = false; // Control para evitar múltiples toques
     let lastTouchTime = 0; // Para debounce
     let isPlayingAudio = false; // Control para evitar múltiples audios
+    let audioContextUnlocked = false; // Control para desbloquear el contexto de audio
 
     const colors = [
       'rgba(255, 107, 107, 0.6)',
@@ -83,9 +84,23 @@
       }
     };
 
+    // Desbloquear el contexto de audio en la primera interacción
+    function unlockAudioContext() {
+      if (!audioContextUnlocked) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+        audioContext.resume().then(() => {
+          audioContextUnlocked = true;
+          console.log('Contexto de audio desbloqueado');
+        }).catch(error => {
+          console.error('Error al desbloquear el contexto de audio:', error);
+        });
+      }
+    }
+
     function speak(text) {
       if (!language || isPlayingAudio) {
-        return; // Evitar advertencias si no hay idioma o audio en curso
+        return; // Evitar múltiples audios o reproducción sin idioma
       }
 
       isPlayingAudio = true;
@@ -105,16 +120,20 @@
         audioFile = `./audio/${lang}/score_${lang}.mp3`;
       }
 
+      console.log('Intentando reproducir:', audioFile); // Depuración
       try {
         const audio = new Audio(audioFile);
         audio.play().then(() => {
           audio.onended = () => {
-            isPlayingAudio = false; // Permitir nuevo audio al terminar
+            isPlayingAudio = false;
+            console.log('Audio finalizado:', audioFile);
           };
-        }).catch(() => {
-          isPlayingAudio = false; // Restablecer si hay error
+        }).catch(error => {
+          console.error(`Error al reproducir ${audioFile}:`, error);
+          isPlayingAudio = false;
         });
       } catch (error) {
+        console.error(`Error al cargar ${audioFile}:`, error);
         isPlayingAudio = false;
       }
     }
@@ -134,6 +153,7 @@
     function selectLanguage(lang) {
       language = lang;
       document.getElementById('language-selector').style.display = 'none';
+      unlockAudioContext(); // Desbloquear el contexto de audio al seleccionar idioma
       resetGrid();
       updateScore();
       window.loop(); // Reactivar el bucle para dibujar continuamente

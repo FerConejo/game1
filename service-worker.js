@@ -1,4 +1,4 @@
-const CACHE_NAME = 'numeros-1-al-100-v3'; // Cambiado a v2 para forzar actualización del caché
+const CACHE_NAME = 'numeros-1-al-100-v4'; // Cambiado a v2 para forzar actualización del caché
 const urlsToCache = [
   './',
   './index.html',

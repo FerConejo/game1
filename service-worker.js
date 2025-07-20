@@ -236,6 +236,9 @@ self.addEventListener('install', event => {
       .then(cache => {
         return cache.addAll(urlsToCache);
       })
+      .catch(error => {
+        console.error('Error al cachear recursos:', error);
+      })
   );
 });
 
@@ -244,6 +247,9 @@ self.addEventListener('fetch', event => {
     caches.match(event.request)
       .then(response => {
         return response || fetch(event.request);
+      })
+      .catch(error => {
+        console.error('Error en fetch:', error);
       })
   );
 });

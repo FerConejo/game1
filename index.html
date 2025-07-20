@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="description" content="Juego educativo para niños que ayuda a aprender números del 1 al 100.">
+  <meta name="theme-color" content="#343434">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Juego Números 1 al 100</title>
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./p5.min.js" defer></script>
+</head>
+<body>
+  <div class="card">
+    <div id="message"></div>
+    <div id="score"></div>
+    <div id="f_container"></div>
+    <div id="language-selector">
+      <h2>Selecciona un idioma / Choose a language / Choisissez une langue</h2>
+      <button onclick="selectLanguage('es-ES')">Español</button>
+      <button onclick="selectLanguage('en-US')">English</button>
+      <button onclick="selectLanguage('fr-FR')">Français</button>
+    </div>
+  </div>
+  <div class="accents">
+    <div class="acc-card"></div>
+    <div class="acc-card"></div>
+    <div class="acc-card"></div>
+    <div class="light"></div>
+    <div class="light sm"></div>
+    <div class="top-light"></div>
+  </div>
+  <script>
+    // Estado del juego
+    let currentNumber = 1;
+    let numbers = [];
+    let gridSize = 5;
+    let cellSize = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.15, 80);
+    let score = 0;
+    let round = 1;
+    let message = "";
+    let language = null;
+
+    const colors = [
+      'rgba(255, 107, 107, 0.6)',
+      'rgba(78, 205, 196, 0.6)',
+      'rgba(69, 183, 209, 0.6)',
+      'rgba(150, 206, 180, 0.6)',
+      'rgba(255, 238, 173, 0.6)'
+    ];
+
+    const messages = {
+      'es-ES': {
+        welcome: 'Encuentra el número 1',
+        correct: num => `¡Bien hecho! Encuentra el número ${num}`,
+        round: (round, num) => `¡Ronda ${round}! Encuentra el número ${num}`,
+        wrong: num => `¡Ups! Ese número no es ${num}. Inténta nuevamente.`,
+        win: score => `¡Lo conseguiste! Has alcanzado el número 100. ¡Enhorabuena! Puntuación final: ${score}`,
+        score: score => `Puntuación: ${score}`
+      },
+      'en-US': {
+        welcome: 'Welcome, little geniuses! Find number 1',
+        correct: num => `Well done! Find number ${num}`,
+        round: (round, num) => `Round ${round}! Find number ${num}`,
+        wrong: num => `Oops! That is not number ${num}. Try again.`,
+        win: score => `You did it! You reached number 100. Congratulations! Final score: ${score}`,
+        score: score => `Score: ${score}`
+      },
+      'fr-FR': {
+        welcome: 'Bienvenue, petits génies ! Trouvez le numéro 1 !',
+        correct: num => `Bien joué ! Trouvez le numéro ${num}`,
+        round: (round, num) => `Tour ${round} ! Trouvez le numéro ${num}`,
+        wrong: num => `Oups ! Ce n'est pas le numéro ${num}. Essayez encore.`,
+        win: score => `Vous avez réussi ! Vous avez atteint le numéro 100. Félicitations ! Score final : ${score}`,
+        score: score => `Score: ${score}`
+      }
+    };
+
+    function speak(text) {
+      if (!language) {
+        console.warn('Selecciona un idioma primero.');
+        return;
+      }
+
+      const lang = language.split('-')[0];
+      let audioFile;
+      if (text === messages[language].welcome) {
+    audioFile = `./audio/${lang}/welcome_${lang}.mp3`;
+      } else if (text === messages[language].correct(currentNumber)) {
+        audioFile = `./audio/${lang}/correct_${lang}_${currentNumber}.mp3`;
+      } else if (text === messages[language].wrong(currentNumber)) {
+        audioFile = `./audio/${lang}/wrong_${lang}_${currentNumber}.mp3`;
+      } else if (text === messages[language].round(round, currentNumber)) {
+        audioFile = `./audio/${lang}/round_${lang}_${round}.mp3`;
+      } else if (text === messages[language].win(score)) {
+        audioFile = `./audio/${lang}/win_${lang}.mp3`;
+      } else {
+        audioFile = `./audio/${lang}/score_${lang}.mp3`;
+      }
+
+      try {
+        const audio = new Audio(audioFile);
+        audio.play().catch(error => {
+          console.error(`Error al reproducir ${audioFile}:`, error);
+        });
+      } catch (error) {
+        console.warn(`No se encontró ${audioFile}`);
+      }
+    }
+
+    function setup() {
+      cellSize = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.15, 80);
+      const canvas = createCanvas(gridSize * cellSize + 20, gridSize * cellSize + 20);
+      canvas.parent('f_container');
+      canvas.style('display', 'block');
+      canvas.style('margin', '0 auto');
+      noLoop();
+      updateMessage(messages[language]?.welcome || 'Encuentra el número 1');
+      resetGrid();
+      redraw();
+    }
+
+    function selectLanguage(lang) {
+      language = lang;
+      document.getElementById('language-selector').style.display = 'none';
+      resetGrid();
+      updateScore();
+      window.loop();
+      updateMessage(messages[lang].welcome);
+    }
+
+    function resetGrid() {
+      numbers = [];
+      let startRange = Math.floor((currentNumber - 1) / 10) * 10 + 1;
+      let endRange = Math.min(startRange + 9, 100);
+      let availableNumbers = Array.from(
+        { length: endRange - startRange + 1 },
+        (_, i) => startRange + i
+      );
+      
+      while (availableNumbers.length < gridSize * gridSize) {
+        availableNumbers = availableNumbers.concat(availableNumbers);
+      }
+      availableNumbers = availableNumbers.slice(0, gridSize * gridSize);
+      shuffleArray(availableNumbers);
+      
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        numbers.push({
+          value: availableNumbers[i],
+          x: (i % gridSize) * cellSize + 10,
+          y: Math.floor(i / gridSize) * cellSize + 10,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+      redraw();
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function draw() {
+      background('#f0f8ff');
+      for (const num of numbers) {
+        fill(num.color);
+        rect(num.x, num.y, cellSize, cellSize, 10);
+        fill(0);
+        textSize(Math.min(cellSize * 0.4, 32));
+        textAlign(CENTER, CENTER);
+        text(num.value, num.x + cellSize / 2, num.y + cellSize / 2);
+      }
+      document.getElementById('message').innerText = message;
+    }
+
+    function mousePressed() {
+      if (!language) return;
+      let numberClicked = false;
+      
+      for (const num of numbers) {
+        if (mouseX > num.x && mouseX < num.x + cellSize && mouseY > num.y && mouseY < num.y + cellSize) {
+          numberClicked = true;
+          if (num.value === currentNumber) {
+            score += 10;
+            currentNumber++;
+            if (currentNumber > 100) {
+              message = messages[language].win(score);
+              window.noLoop();
+            } else {
+              message = messages[language].correct(currentNumber);
+              if ((currentNumber - 1) % 10 === 0) {
+                round++;
+                message = messages[language].round(round, currentNumber);
+              }
+            }
+          } else {
+            score = Math.max(0, score - 5);
+            message = messages[language].wrong(currentNumber);
+          }
+          updateScore();
+          updateMessage(message);
+          resetGrid();
+        }
+      }
+    }
+
+    function windowResized() {
+      cellSize = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.15, 80);
+      resizeCanvas(gridSize * cellSize + 20, gridSize * cellSize + 20);
+      resetGrid();
+    }
+
+    function updateScore() {
+      const scoreText = messages[language]?.score(score) || `Puntuación: ${score}`;
+      document.getElementById('score').innerText = scoreText;
+      speak(scoreText);
+    }
+
+    function updateMessage(text) {
+      message = text;
+      document.getElementById('message').innerText = text;
+      speak(text);
+    }
+
+    // Registrar el service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registrado con éxito:', registration);
+          })
+          .catch(error => {
+            console.error('Error al registrar el Service Worker:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+@import url("https://fonts.cdnfonts.com/css/mona-sans");
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      scroll-behavior: smooth;
+    }
+    html, body {
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #343434;
+      background: linear-gradient(15deg, #343434 0%, #252525 100%);
+      font-family: "Mona-Sans", sans-serif;
+    }
+    canvas {
+      border: none;
+      border-radius: 12px;
+      z-index: 1001;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      box-shadow: 
+        0 4px 6px rgba(0, 0, 0, 0.1),
+        inset 0 1px 1px rgba(255, 255, 255, 0.2),
+        inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+      max-width: 90vw;
+      max-height: 90vh;
+      display: block;
+      margin: 0 auto;
+    }
+    #message {
+      font-size: clamp(1rem, 4vw, 1.5rem);
+      font-weight: bold;
+      color: #e4dfdf;
+      z-index: 10;
+      text-align: center;
+      margin-bottom: 1rem;
+      width: 90%;
+    }
+    #score {
+      font-size: clamp(0.9rem, 3.5vw, 1.25rem);
+      color: #e4dfdf;
+      z-index: 10;
+      text-align: center;
+      margin-bottom: 1rem;
+      width: 90%;
+    }
+    #f_container {
+      position: relative;
+      color: black;
+      z-index: 1000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 2vmin auto;
+      width: min(90vw, 700px);
+      min-height: min(90vh, 450px);
+    }
+    .card {
+      position: relative;
+      margin: 2vmin auto;
+      width: min(90vw, 700px);
+      height: auto;
+      min-height: min(90vh, 400px);
+      border-radius: 16px;
+      background: rgba(25, 25, 25, 0.7);
+      backdrop-filter: blur(4px);
+      box-shadow: 
+        inset 0 2px 2px rgba(231, 196, 160, 0.2),
+        inset 0 -2px 2px rgba(0, 0, 0, 0.2);
+      color: #050505;
+      text-shadow: 1px 1px 3px rgba(10, 10, 10, 0.6);
+      padding: 2vmin;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+    .card .button {
+      width: fit-content;
+      border-radius: 100px;
+      padding: 0.5rem 2rem;
+      margin-top: 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.3),
+        inset 0 0 100px rgba(0, 0, 0, 0.2),
+        0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.4s ease-in-out;
+      cursor: pointer;
+      z-index: 10;
+      font-size: clamp(0.8rem, 3vw, 1rem);
+    }
+    .card .button:hover {
+      box-shadow: 
+        0 0 0 1px rgba(255, 255, 255, 0.3),
+        inset 0 0 100px rgba(0, 0, 0, 0.15),
+        -4px 0 8px rgba(255, 255, 255, 0.2);
+    }
+    .accents {
+      user-select: none;
+      pointer-events: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+    }
+    .accents .acc-card {
+      width: min(95vw, 780px);
+      height: min(95vh, 570px);
+      background: rgba(238, 238, 238, 0.1);
+      opacity: 0.8;
+      z-index: -1;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 5%;
+      margin: auto;
+      border-radius: 16px;
+      box-shadow: 
+        inset 0 2px 2px rgba(224, 201, 178, 0.4),
+        inset 0 -2px 2px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+      transition: all 0.1s linear;
+      transform-origin: 20% 80%;
+    }
+    .accents .acc-card:nth-child(1) {
+      animation: wobble 18s ease-in-out infinite;
+    }
+    .accents .acc-card:nth-child(2) {
+      animation: wobble 22s ease-in-out -6s infinite reverse;
+    }
+    .accents .acc-card:nth-child(3) {
+      animation: wobble 26s ease-in-out -18s infinite;
+    }
+    .accents .light {
+      --bgref: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg id='Layer_1' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 487 487'%3E%3Ccircle cx='243' cy='243.5' r='233' style='fill:none; opacity:.1; stroke:%23aaa; stroke-linecap:round; stroke-miterlimit:10; stroke-width:18px;'/%3E%3Ccircle cx='243.5' cy='243.5' r='243' style='fill:none; stroke:%23111; stroke-linecap:round; stroke-miterlimit:10;'/%3E%3Ccircle cx='243' cy='243.5' r='222' style='fill:none; stroke:%23111; stroke-linecap:round; stroke-miterlimit:10;'/%3E%3Cpath d='m10,243.5C10,114.82,114.32,10.5,243,10.5' style='fill:none; stroke:%23ddd; stroke-linecap:round; stroke-miterlimit:10; stroke-width:18px;'/%3E%3C/svg%3E");
+      position: absolute;
+      left: 0;
+      right: 1;
+      top: 40vmin;
+      margin: auto;
+      width: min(30vw, 200px);
+      height: min(30vw, 200px);
+      z-index: 2;
+      background-image: var(--bgref);
+      animation: rotate360 22s linear infinite;
+    }
+    .accents .light::before,
+    .accents .light::after {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      right: 1;
+      top: 0;
+      bottom: 0;
+      margin: auto;
+      background-image: var(--bgref);
+      filter: blur(3px);
+      scale: 1.01;
+    }
+    .accents .light::after {
+      filter: blur(8px);
+    }
+    .accents .light.sm {
+      width: min(22vw, 150px);
+      height: min(22vw, 150px);
+      top: 10vmin;
+      animation: rotate360 18s linear -10s infinite;
+    }
+    .accents .top-light {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 3vmin;
+      margin: auto;
+      width: min(50vw, 284px);
+      height: 0.4vmin;
+      border-radius: 10px;
+      background: rgba(255, 254, 249, 0.8);
+      box-shadow: 
+        0 0px 1px 1px rgba(255, 199, 142, 0.6),
+        0 1px 2px 1px rgba(255, 148, 41, 0.5),
+        0 2px 6px 1px rgba(233, 139, 45, 0.5),
+        0 4px 12px 0px rgba(255, 158, 61, 0.6),
+        0 12px 20px 12px rgba(255, 128, 0, 0.3);
+      z-index: 20;
+    }
+    @keyframes rotate360 {
+      to {
+        rotate: 360deg;
+      }
+    }
+    @keyframes wobble {
+      0% {
+        transform: translateX(1vmin) translateY(2vmin) rotate(-3deg) scale(1);
+      }
+      20% {
+        transform: translateX(-4vmin) translateY(-0.8vmin) rotate(6deg) scale(1.02);
+      }
+      60% {
+        transform: translateX(3vmin) translateY(1.8vmin) rotate(-8deg) scale(1);
+      }
+      80% {
+        transform: translateX(-4vmin) translateY(-2vmin) rotate(12deg) scale(0.94);
+      }
+      100% {
+        transform: translateX(1vmin) translateY(2vmin) rotate(-3deg) scale(1);
+      }
+    }
+    #language-selector {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2vmin;
+      border-radius: 10 dispersive;
+      text-align: center;
+      z-index: 1002;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      width: min(80vw, 400px);
+    }
+    #language-selector h2 {
+      margin: 0 0 1rem;
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      color: #333;
+    }
+    #language-selector button {
+      padding: 0.6rem 1.2rem;
+      margin: 0.3rem;
+      border: none;
+      border-radius: 5px;
+      background: #4e9af1;
+      color: white;
+      font-size: clamp(0.8rem, 3vw, 1rem);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #language-selector button:hover {
+      background: #357abd;
+    }
+    @media screen and (max-width: 600px) {
+      .card {
+        width: 95vw;
+        min-height: auto;
+        padding: 1vmin;
+      }
+      .accents .acc-card {
+        width: 95vw;
+        height: min(50vh, 300px);
+        top: 2vmin;
+      }
+      .accents .light {
+        width: min(20vw, 100px);
+        height: min(20vw, 100px);
+        top: 15vmin;
+      }
+      .accents .light.sm {
+        width: min(15vw, 75px);
+        height: min(15vw, 75px);
+        top: 5vmin;
+      }
+      .accents .top-light {
+        width: min(60vw, 200px);
+        top: 3vmin;
+      }
+    }
+    @media screen and (max-height: 600px) {
+      .card {
+        min-height: auto;
+        padding: 1vmin;
+      }
+      .accents .acc-card {
+        height: min(40vh, 200px);
+        top: 2vmin;
+      }
+      .accents .light {
+        top: 10vmin;
+      }
+      .accents .light.sm {
+        top: 3vmin;
+      }
+    }

@@ -230,7 +230,7 @@
       }
 
       const now = Date.now();
-      if (now - lastTouchTime < 300) {
+      if (now - lastTouchTime < 200) {
         console.log('Toque ignorado por debounce');
         return;
       }

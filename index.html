@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="./icon-192.png">
   <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./style.css">
-  <script src="./p5.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js" defer></script>
 </head>
 <body>
   <div class="card">
@@ -44,6 +44,9 @@
     let round = 1;
     let message = "";
     let language = null;
+    let isProcessingTouch = false; // Control para evitar múltiples toques
+    let lastTouchTime = 0; // Para debounce
+    let isPlayingAudio = false; // Control para evitar múltiples audios
 
     const colors = [
       'rgba(255, 107, 107, 0.6)',
@@ -81,15 +84,16 @@
     };
 
     function speak(text) {
-      if (!language) {
-        console.warn('Selecciona un idioma primero.');
+      if (!language || isPlayingAudio) {
+        console.warn('Selecciona un idioma primero o espera a que termine el audio.');
         return;
       }
 
+      isPlayingAudio = true;
       const lang = language.split('-')[0];
       let audioFile;
       if (text === messages[language].welcome) {
-    audioFile = `./audio/${lang}/welcome_${lang}.mp3`;
+        audioFile = `./audio/${lang}/welcome_${lang}.mp3`;
       } else if (text === messages[language].correct(currentNumber)) {
         audioFile = `./audio/${lang}/correct_${lang}_${currentNumber}.mp3`;
       } else if (text === messages[language].wrong(currentNumber)) {
@@ -104,11 +108,17 @@
 
       try {
         const audio = new Audio(audioFile);
-        audio.play().catch(error => {
+        audio.play().then(() => {
+          audio.onended = () => {
+            isPlayingAudio = false; // Permitir nuevo audio al terminar
+          };
+        }).catch(error => {
           console.error(`Error al reproducir ${audioFile}:`, error);
+          isPlayingAudio = false;
         });
       } catch (error) {
         console.warn(`No se encontró ${audioFile}`);
+        isPlayingAudio = false;
       }
     }
 
@@ -118,6 +128,7 @@
       canvas.parent('f_container');
       canvas.style('display', 'block');
       canvas.style('margin', '0 auto');
+      canvas.style('touch-action', 'none'); // Prevenir gestos táctiles no deseados
       noLoop();
       updateMessage(messages[language]?.welcome || 'Encuentra el número 1');
       resetGrid();
@@ -180,10 +191,15 @@
       document.getElementById('message').innerText = message;
     }
 
-    function mousePressed() {
-      if (!language) return;
+    function touchStarted() {
+      if (!language || isProcessingTouch) return false;
+
+      const now = Date.now();
+      if (now - lastTouchTime < 300) return false; // Debounce: ignora toques dentro de 300ms
+      lastTouchTime = now;
+      isProcessingTouch = true;
+
       let numberClicked = false;
-      
       for (const num of numbers) {
         if (mouseX > num.x && mouseX < num.x + cellSize && mouseY > num.y && mouseY < num.y + cellSize) {
           numberClicked = true;
@@ -207,8 +223,20 @@
           updateScore();
           updateMessage(message);
           resetGrid();
+          break; // Salir del bucle tras procesar un número
         }
       }
+
+      setTimeout(() => {
+        isProcessingTouch = false; // Resetear después de 300ms
+      }, 300);
+
+      return false; // Prevenir comportamiento por defecto
+    }
+
+    function mousePressed() {
+      if (!language || isProcessingTouch) return;
+      touchStarted(); // Reutilizar la lógica de touchStarted para clics de ratón
     }
 
     function windowResized() {
@@ -220,13 +248,13 @@
     function updateScore() {
       const scoreText = messages[language]?.score(score) || `Puntuación: ${score}`;
       document.getElementById('score').innerText = scoreText;
-      speak(scoreText);
+      // No llamar a speak aquí para evitar duplicaciones
     }
 
     function updateMessage(text) {
       message = text;
       document.getElementById('message').innerText = text;
-      speak(text);
+      speak(text); // Solo llamar a speak desde updateMessage
     }
 
     // Registrar el service worker

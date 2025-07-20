@@ -1,266 +1,76 @@
-const CACHE_NAME = 'numeros-1-al-100-v4'; // Cambiado a v2 para forzar actualización del caché
+const CACHE_NAME = 'numeros-1-al-100-v6';
+const languages = ['es', 'en', 'fr'];
+const audioFiles = [
+  'welcome_{lang}.mp3',
+  'win_{lang}.mp3',
+  'score_{lang}.mp3'
+];
+// Generar correct_1.mp3 a correct_100.mp3 y wrong_1.mp3 a wrong_100.mp3
+for (let i = 1; i <= 100; i++) {
+  audioFiles.push(`correct_{lang}_${i}.mp3`);
+  audioFiles.push(`wrong_{lang}_${i}.mp3`);
+}
+// Generar round_1.mp3 a round_10.mp3
+for (let i = 1; i <= 10; i++) {
+  audioFiles.push(`round_{lang}_${i}.mp3`);
+}
+
 const urlsToCache = [
-  './',
-  './index.html',
-  './style.css',
-  './icon-192.png',
-  './icon-512.png',
-  './favicon.ico',
-  'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js',
-  // Archivos de audio (ajusta según los archivos que tengas)
-  './audio/es/welcome_es.mp3',
-  './audio/en/welcome_en.mp3',
-  './audio/fr/welcome_fr.mp3',
-  './audio/es/win_es.mp3',
-  './audio/en/win_en.mp3',
-  './audio/fr/win_fr.mp3',
-  './audio/es/score_es.mp3',
-  './audio/en/score_en.mp3',
-  './audio/fr/score_fr.mp3',
-  // Agrega más archivos como './audio/es/correct_es_1.mp3', etc., según sea necesario
-  './audio/es/correct_es_2.mp3',
-  './audio/es/correct_es_3.mp3',
-  './audio/es/correct_es_4.mp3',
-  './audio/es/correct_es_5.mp3',
-  './audio/es/correct_es_6.mp3',
-  './audio/es/correct_es_7.mp3',
-  './audio/es/correct_es_8.mp3',
-  './audio/es/correct_es_9.mp3',
-  './audio/es/correct_es_10.mp3',
-  './audio/es/correct_es_11.mp3',
-  './audio/es/correct_es_12.mp3',
-  './audio/es/correct_es_13.mp3',
-  './audio/es/correct_es_14.mp3',
-  './audio/es/correct_es_15.mp3',
-  './audio/es/correct_es_16.mp3',
-  './audio/es/correct_es_17.mp3',
-  './audio/es/correct_es_18.mp3',
-  './audio/es/correct_es_19.mp3',
-  './audio/es/correct_es_20.mp3',
-  './audio/es/correct_es_21.mp3',
-  './audio/es/correct_es_22.mp3',
-  './audio/es/correct_es_23.mp3',
-  './audio/es/correct_es_24.mp3',
-  './audio/es/correct_es_25.mp3',
-  './audio/es/correct_es_26.mp3',
-  './audio/es/correct_es_27.mp3',
-  './audio/es/correct_es_28.mp3',
-  './audio/es/correct_es_29.mp3',
-  './audio/es/correct_es_30.mp3',
-  './audio/es/correct_es_31.mp3',
-  './audio/es/correct_es_32.mp3',
-  './audio/es/correct_es_33.mp3',
-  './audio/es/correct_es_34.mp3',
-  './audio/es/correct_es_35.mp3',
-  './audio/es/correct_es_36.mp3',
-  './audio/es/correct_es_37.mp3',
-  './audio/es/correct_es_38.mp3',
-  './audio/es/correct_es_39.mp3',
-  './audio/es/correct_es_40.mp3',
-  './audio/es/correct_es_41.mp3',
-  './audio/es/correct_es_42.mp3',
-  './audio/es/correct_es_43.mp3',
-  './audio/es/correct_es_44.mp3',
-  './audio/es/correct_es_45.mp3',
-  './audio/es/correct_es_46.mp3',
-  './audio/es/correct_es_47.mp3',
-  './audio/es/correct_es_48.mp3',
-  './audio/es/correct_es_49.mp3',
-  './audio/es/correct_es_50.mp3',
-  './audio/es/correct_es_51.mp3',
-  './audio/es/correct_es_52.mp3',
-  './audio/es/correct_es_53.mp3',
-  './audio/es/correct_es_54.mp3',
-  './audio/es/correct_es_55.mp3',
-  './audio/es/correct_es_56.mp3',
-  './audio/es/correct_es_57.mp3',
-  './audio/es/correct_es_58.mp3',
-  './audio/es/correct_es_59.mp3',
-  './audio/es/correct_es_60.mp3',
-  './audio/es/correct_es_61.mp3',
-  './audio/es/correct_es_62.mp3',
-  './audio/es/correct_es_63.mp3',
-  './audio/es/correct_es_64.mp3',
-  './audio/es/correct_es_65.mp3',
-  './audio/es/correct_es_66.mp3',
-  './audio/es/correct_es_67.mp3',
-  './audio/es/correct_es_68.mp3',
-  './audio/es/correct_es_69.mp3',
-  './audio/es/correct_es_70.mp3',
-  './audio/es/correct_es_71.mp3',
-  './audio/es/correct_es_72.mp3',
-  './audio/es/correct_es_73.mp3',
-  './audio/es/correct_es_74.mp3',
-  './audio/es/correct_es_75.mp3',
-  './audio/es/correct_es_76.mp3',
-  './audio/es/correct_es_77.mp3',
-  './audio/es/correct_es_78.mp3',
-  './audio/es/correct_es_79.mp3',
-  './audio/es/correct_es_80.mp3',
-  './audio/es/correct_es_81.mp3',
-  './audio/es/correct_es_82.mp3',
-  './audio/es/correct_es_83.mp3',
-  './audio/es/correct_es_84.mp3',
-  './audio/es/correct_es_85.mp3',
-  './audio/es/correct_es_86.mp3',
-  './audio/es/correct_es_87.mp3',
-  './audio/es/correct_es_88.mp3',
-  './audio/es/correct_es_89.mp3',
-  './audio/es/correct_es_90.mp3',
-  './audio/es/correct_es_91.mp3',
-  './audio/es/correct_es_92.mp3',
-  './audio/es/correct_es_93.mp3',
-  './audio/es/correct_es_94.mp3',
-  './audio/es/correct_es_95.mp3',
-  './audio/es/correct_es_96.mp3',
-  './audio/es/correct_es_97.mp3',
-  './audio/es/correct_es_98.mp3',
-  './audio/es/correct_es_99.mp3',
-  './audio/es/correct_es_100.mp3',
-  //Archivos round_es_xx.mp3
-  './audio/es/round_es_2.mp3',
-  './audio/es/round_es_3.mp3',
-  './audio/es/round_es_4.mp3',
-  './audio/es/round_es_5.mp3',
-  './audio/es/round_es_6.mp3',
-  './audio/es/round_es_7.mp3',
-  './audio/es/round_es_8.mp3',
-  './audio/es/round_es_9.mp3',
-  './audio/es/round_es_10.mp3',
-  //Archivos wrong_es_xx.mp3
-  './audio/es/wrong_es_1.mp3',
-  './audio/es/wrong_es_2.mp3',
-  './audio/es/wrong_es_3.mp3',
-  './audio/es/wrong_es_4.mp3',
-  './audio/es/wrong_es_5.mp3',
-  './audio/es/wrong_es_6.mp3',
-  './audio/es/wrong_es_7.mp3',
-  './audio/es/wrong_es_8.mp3',
-  './audio/es/wrong_es_9.mp3',
-  './audio/es/wrong_es_10.mp3',
-  './audio/es/wrong_es_11.mp3',
-  './audio/es/wrong_es_12.mp3',
-  './audio/es/wrong_es_13.mp3',
-  './audio/es/wrong_es_14.mp3',
-  './audio/es/wrong_es_15.mp3',
-  './audio/es/wrong_es_16.mp3',
-  './audio/es/wrong_es_17.mp3',
-  './audio/es/wrong_es_18.mp3',
-  './audio/es/wrong_es_19.mp3',
-  './audio/es/wrong_es_20.mp3',
-  './audio/es/wrong_es_21.mp3',
-  './audio/es/wrong_es_22.mp3',
-  './audio/es/wrong_es_23.mp3',
-  './audio/es/wrong_es_24.mp3',
-  './audio/es/wrong_es_25.mp3',
-  './audio/es/wrong_es_26.mp3',
-  './audio/es/wrong_es_27.mp3',
-  './audio/es/wrong_es_28.mp3',
-  './audio/es/wrong_es_29.mp3',
-  './audio/es/wrong_es_30.mp3',
-  './audio/es/wrong_es_31.mp3',
-  './audio/es/wrong_es_32.mp3',
-  './audio/es/wrong_es_33.mp3',
-  './audio/es/wrong_es_34.mp3',
-  './audio/es/wrong_es_35.mp3',
-  './audio/es/wrong_es_36.mp3',
-  './audio/es/wrong_es_37.mp3',
-  './audio/es/wrong_es_38.mp3',
-  './audio/es/wrong_es_39.mp3',
-  './audio/es/wrong_es_40.mp3',
-  './audio/es/wrong_es_41.mp3',
-  './audio/es/wrong_es_42.mp3',
-  './audio/es/wrong_es_43.mp3',
-  './audio/es/wrong_es_44.mp3',
-  './audio/es/wrong_es_45.mp3',
-  './audio/es/wrong_es_46.mp3',
-  './audio/es/wrong_es_47.mp3',
-  './audio/es/wrong_es_48.mp3',
-  './audio/es/wrong_es_49.mp3',
-  './audio/es/wrong_es_50.mp3',
-  './audio/es/wrong_es_51.mp3',
-  './audio/es/wrong_es_52.mp3',
-  './audio/es/wrong_es_53.mp3',
-  './audio/es/wrong_es_54.mp3',
-  './audio/es/wrong_es_55.mp3',
-  './audio/es/wrong_es_56.mp3',
-  './audio/es/wrong_es_57.mp3',
-  './audio/es/wrong_es_58.mp3',
-  './audio/es/wrong_es_59.mp3',
-  './audio/es/wrong_es_60.mp3',
-  './audio/es/wrong_es_61.mp3',
-  './audio/es/wrong_es_62.mp3',
-  './audio/es/wrong_es_63.mp3',
-  './audio/es/wrong_es_64.mp3',
-  './audio/es/wrong_es_65.mp3',
-  './audio/es/wrong_es_66.mp3',
-  './audio/es/wrong_es_67.mp3',
-  './audio/es/wrong_es_68.mp3',
-  './audio/es/wrong_es_69.mp3',
-  './audio/es/wrong_es_70.mp3',
-  './audio/es/wrong_es_71.mp3',
-  './audio/es/wrong_es_72.mp3',
-  './audio/es/wrong_es_73.mp3',
-  './audio/es/wrong_es_74.mp3',
-  './audio/es/wrong_es_75.mp3',
-  './audio/es/wrong_es_76.mp3',
-  './audio/es/wrong_es_77.mp3',
-  './audio/es/wrong_es_78.mp3',
-  './audio/es/wrong_es_79.mp3',
-  './audio/es/wrong_es_80.mp3',
-  './audio/es/wrong_es_81.mp3',
-  './audio/es/wrong_es_82.mp3',
-  './audio/es/wrong_es_83.mp3',
-  './audio/es/wrong_es_84.mp3',
-  './audio/es/wrong_es_85.mp3',
-  './audio/es/wrong_es_86.mp3',
-  './audio/es/wrong_es_87.mp3',
-  './audio/es/wrong_es_88.mp3',
-  './audio/es/wrong_es_89.mp3',
-  './audio/es/wrong_es_90.mp3',
-  './audio/es/wrong_es_91.mp3',
-  './audio/es/wrong_es_92.mp3',
-  './audio/es/wrong_es_93.mp3',
-  './audio/es/wrong_es_94.mp3',
-  './audio/es/wrong_es_95.mp3',
-  './audio/es/wrong_es_96.mp3',
-  './audio/es/wrong_es_97.mp3',
-  './audio/es/wrong_es_98.mp3',
-  './audio/es/wrong_es_99.mp3',
-  './audio/es/wrong_es_100.mp3'
+  '/',
+  '/index.html',
+  '/style.css',
+  '/p5.min.js',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
+// Añadir audios para cada idioma
+languages.forEach(lang => {
+  audioFiles.forEach(file => {
+    urlsToCache.push(`/audio/${lang}/${file.replace('{lang}', lang)}`);
+  });
+});
+
 self.addEventListener('install', event => {
+  console.log('Service Worker: Instalando...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
+        console.log('Service Worker: Cacheando recursos:', urlsToCache.length, 'archivos');
         return cache.addAll(urlsToCache);
       })
       .catch(error => {
-        console.error('Error al cachear recursos:', error);
+        console.error('Service Worker: Error al cachear recursos:', error);
       })
   );
 });
 
 self.addEventListener('fetch', event => {
+  console.log('Service Worker: Interceptando fetch:', event.request.url);
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        return response || fetch(event.request);
-      })
-      .catch(error => {
-        console.error('Error en fetch:', error);
+        if (response) {
+          console.log('Service Worker: Recurso encontrado en caché:', event.request.url);
+          return response;
+        }
+        console.log('Service Worker: Buscando recurso en red:', event.request.url);
+        return fetch(event.request).catch(error => {
+          console.error('Service Worker: Error en fetch:', error);
+        });
       })
   );
 });
 
 self.addEventListener('activate', event => {
+  console.log('Service Worker: Activando...');
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (!cacheWhitelist.includes(cacheName)) {
+            console.log('Service Worker: Eliminando caché antiguo:', cacheName);
             return caches.delete(cacheName);
           }
         })

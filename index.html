@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -8,21 +8,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Juego Números 1 al 100</title>
-  <link rel="icon" type="image/png" href="/icon-192.png">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="/style.css">
-  <script src="/p5.min.js" onerror="console.error('Error al cargar p5.js local');"></script>
-  <script>
-    // Fallback al CDN si el p5.js local falla
-    if (typeof p5 === 'undefined') {
-      console.warn('p5.js local no disponible, intentando cargar desde CDN');
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js';
-      script.onerror = () => console.error('Error al cargar p5.js desde CDN');
-      document.head.appendChild(script);
-    }
-  </script>
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js" defer></script>
 </head>
 <body>
   <div class="card">
@@ -54,10 +44,10 @@
     let round = 1;
     let message = "";
     let language = null;
-    let isProcessingTouch = false;
-    let lastTouchTime = 0;
-    let isPlayingAudio = false;
-    let audioContextUnlocked = false;
+    let isProcessingTouch = false; // Control para evitar múltiples toques
+    let lastTouchTime = 0; // Para debounce
+    let isPlayingAudio = false; // Control para bloquear tablero durante audio
+    let audioContextUnlocked = false; // Control para desbloquear contexto de audio
 
     const colors = [
       'rgba(255, 107, 107, 0.6)',
@@ -94,20 +84,45 @@
       }
     };
 
+    // Precargar audios para el idioma seleccionado
+    function preloadAudios(lang) {
+      console.log('Precargando audios para:', lang);
+      const audioFiles = [
+        `/audio/${lang}/welcome_${lang}.mp3`,
+        `/audio/${lang}/win_${lang}.mp3`,
+        `/audio/${lang}/score_${lang}.mp3`
+      ];
+      for (let i = 1; i <= 100; i++) {
+        audioFiles.push(`/audio/${lang}/correct_${lang}_${i}.mp3`);
+        audioFiles.push(`/audio/${lang}/wrong_${lang}_${i}.mp3`);
+      }
+      for (let i = 1; i <= 10; i++) {
+        audioFiles.push(`/audio/${lang}/round_${lang}_${i}.mp3`);
+      }
+
+      audioFiles.forEach(file => {
+        try {
+          const audio = new Audio(file);
+          audio.preload = 'auto';
+          audio.load();
+          console.log(`Precargado: ${file}`);
+        } catch (error) {
+          console.error(`Error al precargar ${file}:`, error);
+        }
+      });
+    }
+
+    // Desbloquear el contexto de audio en la primera interacción
     function unlockAudioContext() {
       if (!audioContextUnlocked) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          const audioContext = new AudioContext();
-          audioContext.resume().then(() => {
-            audioContextUnlocked = true;
-            console.log('Contexto de audio desbloqueado');
-          }).catch(error => {
-            console.error('Error al desbloquear el contexto de audio:', error);
-          });
-        } else {
-          console.warn('AudioContext no soportado en este navegador');
-        }
+        const audioContext = new AudioContext();
+        audioContext.resume().then(() => {
+          audioContextUnlocked = true;
+          console.log('Contexto de audio desbloqueado');
+        }).catch(error => {
+          console.error('Error al desbloquear el contexto de audio:', error);
+        });
       }
     }
 
@@ -115,7 +130,6 @@
       if (!language) {
         console.log('No se puede reproducir audio: idioma no seleccionado');
         isPlayingAudio = false;
-        redraw();
         return;
       }
 
@@ -123,110 +137,86 @@
       const lang = language.split('-')[0];
       let audioFile;
       if (text === messages[language].welcome) {
-        audioFile = `/audio/${lang}/welcome_${lang}.mp3`;
+        audioFile = `./audio/${lang}/welcome_${lang}.mp3`;
       } else if (text === messages[language].correct(currentNumber)) {
-        audioFile = `/audio/${lang}/correct_${lang}_${currentNumber}.mp3`;
+        audioFile = `./audio/${lang}/correct_${lang}_${currentNumber}.mp3`;
       } else if (text === messages[language].wrong(currentNumber)) {
-        audioFile = `/audio/${lang}/wrong_${lang}_${currentNumber}.mp3`;
+        audioFile = `./audio/${lang}/wrong_${lang}_${currentNumber}.mp3`;
       } else if (text === messages[language].round(round, currentNumber)) {
-        audioFile = `/audio/${lang}/round_${lang}_${round}.mp3`;
+        audioFile = `./audio/${lang}/round_${lang}_${round}.mp3`;
       } else if (text === messages[language].win(score)) {
-        audioFile = `/audio/${lang}/win_${lang}.mp3`;
+        audioFile = `./audio/${lang}/win_${lang}.mp3`;
       } else {
-        audioFile = `/audio/${lang}/score_${lang}.mp3`;
+        audioFile = `./audio/${lang}/score_${lang}.mp3`;
       }
 
-      console.log('Intentando reproducir:', audioFile);
+      console.log('Intentando reproducir:', audioFile); // Depuración
       try {
         const audio = new Audio(audioFile);
         audio.play().then(() => {
           audio.onended = () => {
             isPlayingAudio = false;
             console.log('Audio finalizado:', audioFile);
-            redraw();
+            redraw(); // Forzar redibujado al terminar el audio
           };
         }).catch(error => {
           console.error(`Error al reproducir ${audioFile}:`, error);
           isPlayingAudio = false;
-          redraw();
+          redraw(); // Forzar redibujado en caso de error
         });
-        setTimeout(() => {
-          if (isPlayingAudio) {
-            console.warn(`Timeout alcanzado para ${audioFile}, restableciendo isPlayingAudio`);
-            isPlayingAudio = false;
-            redraw();
-          }
-        }, 5000);
       } catch (error) {
         console.error(`Error al cargar ${audioFile}:`, error);
         isPlayingAudio = false;
-        redraw();
+        redraw(); // Forzar redibujado en caso de error
       }
     }
 
     function setup() {
-      try {
-        console.log('Iniciando setup');
-        cellSize = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.15, 80);
-        const canvas = createCanvas(gridSize * cellSize + 20, gridSize * cellSize + 20);
-        canvas.parent('f_container');
-        canvas.style('display', 'block');
-        canvas.style('margin', '0 auto');
-        canvas.style('touch-action', 'none');
-        updateMessage(messages[language]?.welcome || 'Encuentra el número 1');
-        resetGrid();
-        redraw();
-        console.log('Setup completado');
-      } catch (error) {
-        console.error('Error en setup:', error);
-      }
+      cellSize = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.15, 80);
+      const canvas = createCanvas(gridSize * cellSize + 20, gridSize * cellSize + 20);
+      canvas.parent('f_container');
+      canvas.style('display', 'block');
+      canvas.style('margin', '0 auto');
+      canvas.style('touch-action', 'none'); // Prevenir gestos táctiles no deseados
+      updateMessage(messages[language]?.welcome || 'Encuentra el número 1');
+      resetGrid();
+      redraw();
     }
 
     function selectLanguage(lang) {
-      try {
-        console.log('Seleccionando idioma:', lang);
-        language = lang;
-        document.getElementById('language-selector').style.display = 'none';
-        unlockAudioContext();
-        resetGrid();
-        updateScore();
-        window.loop();
-        updateMessage(messages[lang].welcome);
-      } catch (error) {
-        console.error('Error en selectLanguage:', error);
-      }
+      language = lang;
+      document.getElementById('language-selector').style.display = 'none';
+      unlockAudioContext(); // Desbloquear el contexto de audio al seleccionar idioma
+      resetGrid();
+      updateScore();
+      window.loop(); // Reactivar el bucle para dibujar continuamente
+      updateMessage(messages[lang].welcome);
     }
 
     function resetGrid() {
-      try {
-        console.log('Reiniciando grilla');
-        numbers = [];
-        let startRange = Math.floor((currentNumber - 1) / 10) * 10 + 1;
-        let endRange = Math.min(startRange + 9, 100);
-        let availableNumbers = Array.from(
-          { length: endRange - startRange + 1 },
-          (_, i) => startRange + i
-        );
-        
-        while (availableNumbers.length < gridSize * gridSize) {
-          availableNumbers = availableNumbers.concat(availableNumbers);
-        }
-        availableNumbers = availableNumbers.slice(0, gridSize * gridSize);
-        shuffleArray(availableNumbers);
-        
-        for (let i = 0; i < gridSize * gridSize; i++) {
-          numbers.push({
-            value: availableNumbers[i],
-            x: (i % gridSize) * cellSize + 10,
-            y: Math.floor(i / gridSize) * cellSize + 10,
-            color: colors[Math.floor(Math.random() * colors.length)]
-          });
-        }
-        redraw();
-        console.log('Grilla reiniciada');
-      } catch (error) {
-        console.error('Error en resetGrid:', error);
+      numbers = [];
+      let startRange = Math.floor((currentNumber - 1) / 10) * 10 + 1;
+      let endRange = Math.min(startRange + 9, 100);
+      let availableNumbers = Array.from(
+        { length: endRange - startRange + 1 },
+        (_, i) => startRange + i
+      );
+      
+      while (availableNumbers.length < gridSize * gridSize) {
+        availableNumbers = availableNumbers.concat(availableNumbers);
       }
+      availableNumbers = availableNumbers.slice(0, gridSize * gridSize);
+      shuffleArray(availableNumbers);
+      
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        numbers.push({
+          value: availableNumbers[i],
+          x: (i % gridSize) * cellSize + 10,
+          y: Math.floor(i / gridSize) * cellSize + 10,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+      redraw();
     }
 
     function shuffleArray(array) {
@@ -238,132 +228,106 @@
     }
 
     function draw() {
-      try {
-        background('#f0f8ff');
-        for (const num of numbers) {
-          fill(num.color);
-          rect(num.x, num.y, cellSize, cellSize, 10);
-          fill(0);
-          textSize(Math.min(cellSize * 0.4, 32));
-          textAlign(CENTER, CENTER);
-          text(num.value, num.x + cellSize / 2, num.y + cellSize / 2);
-        }
-        document.getElementById('message').innerText = message;
-        if (isPlayingAudio) {
-          fill('rgba(0, 0, 0, 0.5)');
-          rect(0, 0, width, height, 10);
-          fill(255);
-          textSize(20);
-          textAlign(CENTER, CENTER);
-          text(language === 'es-ES' ? 'Espere, audio en reproducción...' :
-               language === 'en-US' ? 'Please wait, audio playing...' :
-               'Veuillez patienter, audio en cours...', width / 2, height / 2);
-        }
-      } catch (error) {
-        console.error('Error en draw:', error);
+      background('#f0f8ff');
+      for (const num of numbers) {
+        fill(num.color);
+        rect(num.x, num.y, cellSize, cellSize, 10);
+        fill(0);
+        textSize(Math.min(cellSize * 0.4, 32));
+        textAlign(CENTER, CENTER);
+        text(num.value, num.x + cellSize / 2, num.y + cellSize / 2);
+      }
+      document.getElementById('message').innerText = message;
+      // Mostrar indicador visual si el tablero está bloqueado
+      if (isPlayingAudio) {
+        fill('rgba(0, 0, 0, 0.5)');
+        rect(0, 0, width, height, 10);
+        fill(255);
+        textSize(20);
+        textAlign(CENTER, CENTER);
+        text(language === 'es-ES' ? 'Espere, audio en reproducción...' :
+             language === 'en-US' ? 'Please wait, audio playing...' :
+             'Veuillez patienter, audio en cours...', width / 2, height / 2);
       }
     }
 
     function touchStarted() {
-      try {
-        unlockAudioContext();
-        if (!language || isProcessingTouch || isPlayingAudio) {
-          console.log('Toque bloqueado:', { languageSet: !!language, isProcessingTouch, isPlayingAudio });
-          return;
-        }
+      if (!language || isProcessingTouch || isPlayingAudio) {
+        console.log('Toque bloqueado:', { languageSet: !!language, isProcessingTouch, isPlayingAudio });
+        return;
+      }
 
-        const now = Date.now();
-        if (now - lastTouchTime < 300) {
-          console.log('Toque ignorado por debounce');
-          return;
-        }
-        lastTouchTime = now;
-        isProcessingTouch = true;
+      const now = Date.now();
+      if (now - lastTouchTime < 200) {
+        console.log('Toque ignorado por debounce');
+        return;
+      }
+      lastTouchTime = now;
+      isProcessingTouch = true;
 
-        let numberClicked = false;
-        for (const num of numbers) {
-          if (mouseX > num.x && mouseX < num.x + cellSize && mouseY > num.y && mouseY < num.y + cellSize) {
-            numberClicked = true;
-            if (num.value === currentNumber) {
-              score += 10;
-              currentNumber++;
-              if (currentNumber > 100) {
-                message = messages[language].win(score);
-                window.noLoop();
-              } else {
-                message = messages[language].correct(currentNumber);
-                if ((currentNumber - 1) % 10 === 0) {
-                  round++;
-                  message = messages[language].round(round, currentNumber);
-                }
-              }
+      let numberClicked = false;
+      for (const num of numbers) {
+        if (mouseX > num.x && mouseX < num.x + cellSize && mouseY > num.y && mouseY < num.y + cellSize) {
+          numberClicked = true;
+          if (num.value === currentNumber) {
+            score += 10;
+            currentNumber++;
+            if (currentNumber > 100) {
+              message = messages[language].win(score);
+              window.noLoop();
             } else {
-              score = Math.max(0, score - 5);
-              message = messages[language].wrong(currentNumber);
+              message = messages[language].correct(currentNumber);
+              if ((currentNumber - 1) % 10 === 0) {
+                round++;
+                message = messages[language].round(round, currentNumber);
+              }
             }
-            updateScore();
-            updateMessage(message);
-            resetGrid();
-            break;
+          } else {
+            score = Math.max(0, score - 5);
+            message = messages[language].wrong(currentNumber);
           }
+          updateScore();
+          updateMessage(message);
+          resetGrid();
+          break; // Salir del bucle tras procesar un número
         }
+      }
 
-        isProcessingTouch = false;
-        if (touches.length > 0) {
-          touches[0].preventDefault();
-        }
-      } catch (error) {
-        console.error('Error en touchStarted:', error);
-        isProcessingTouch = false;
+      isProcessingTouch = false; // Restablecer inmediatamente para permitir nuevos toques
+      if (touches.length > 0) {
+        touches[0].preventDefault(); // Prevenir comportamiento por defecto del navegador
       }
     }
 
     function mousePressed() {
-      try {
-        unlockAudioContext();
-        if (!language || isProcessingTouch || isPlayingAudio) {
-          console.log('Clic bloqueado:', { languageSet: !!language, isProcessingTouch, isPlayingAudio });
-          return;
-        }
-        touchStarted();
-      } catch (error) {
-        console.error('Error en mousePressed:', error);
+      if (!language || isProcessingTouch || isPlayingAudio) {
+        console.log('Clic bloqueado:', { languageSet: !!language, isProcessingTouch, isPlayingAudio });
+        return;
       }
+      touchStarted(); // Reutilizar la lógica de touchStarted para clics de ratón
     }
 
     function windowResized() {
-      try {
-        cellSize = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.15, 80);
-        resizeCanvas(gridSize * cellSize + 20, gridSize * cellSize + 20);
-        resetGrid();
-      } catch (error) {
-        console.error('Error en windowResized:', error);
-      }
+      cellSize = Math.min(window.innerWidth * 0.15, window.innerHeight * 0.15, 80);
+      resizeCanvas(gridSize * cellSize + 20, gridSize * cellSize + 20);
+      resetGrid();
     }
 
     function updateScore() {
-      try {
-        const scoreText = messages[language]?.score(score) || `Puntuación: ${score}`;
-        document.getElementById('score').innerText = scoreText;
-      } catch (error) {
-        console.error('Error en updateScore:', error);
-      }
+      const scoreText = messages[language]?.score(score) || `Puntuación: ${score}`;
+      document.getElementById('score').innerText = scoreText;
     }
 
     function updateMessage(text) {
-      try {
-        message = text;
-        document.getElementById('message').innerText = text;
-        speak(text);
-      } catch (error) {
-        console.error('Error en updateMessage:', error);
-      }
+      message = text;
+      document.getElementById('message').innerText = text;
+      speak(text);
     }
 
     // Registrar el service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js')
           .then(registration => {
             console.log('Service Worker registrado con éxito:', registration);
           })

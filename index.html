@@ -46,8 +46,8 @@
     let language = null;
     let isProcessingTouch = false; // Control para evitar múltiples toques
     let lastTouchTime = 0; // Para debounce
-    let isPlayingAudio = false; // Control para evitar múltiples audios
-    let audioContextUnlocked = false; // Control para desbloquear el contexto de audio
+    let isPlayingAudio = false; // Control para bloquear tablero durante audio
+    let audioContextUnlocked = false; // Control para desbloquear contexto de audio
 
     const colors = [
       'rgba(255, 107, 107, 0.6)',
@@ -99,8 +99,10 @@
     }
 
     function speak(text) {
-      if (!language || isPlayingAudio) {
-        return; // Evitar múltiples audios o reproducción sin idioma
+      if (!language) {
+        console.log('No se puede reproducir audio: idioma no seleccionado');
+        isPlayingAudio = false;
+        return;
       }
 
       isPlayingAudio = true;
@@ -127,14 +129,17 @@
           audio.onended = () => {
             isPlayingAudio = false;
             console.log('Audio finalizado:', audioFile);
+            redraw(); // Forzar redibujado al terminar el audio
           };
         }).catch(error => {
           console.error(`Error al reproducir ${audioFile}:`, error);
           isPlayingAudio = false;
+          redraw(); // Forzar redibujado en caso de error
         });
       } catch (error) {
         console.error(`Error al cargar ${audioFile}:`, error);
         isPlayingAudio = false;
+        redraw(); // Forzar redibujado en caso de error
       }
     }
 
@@ -205,13 +210,30 @@
         text(num.value, num.x + cellSize / 2, num.y + cellSize / 2);
       }
       document.getElementById('message').innerText = message;
+      // Mostrar indicador visual si el tablero está bloqueado
+      if (isPlayingAudio) {
+        fill('rgba(0, 0, 0, 0.5)');
+        rect(0, 0, width, height, 10);
+        fill(255);
+        textSize(20);
+        textAlign(CENTER, CENTER);
+        text(language === 'es-ES' ? 'Espere, audio en reproducción...' :
+             language === 'en-US' ? 'Please wait, audio playing...' :
+             'Veuillez patienter, audio en cours...', width / 2, height / 2);
+      }
     }
 
     function touchStarted() {
-      if (!language || isProcessingTouch) return;
+      if (!language || isProcessingTouch || isPlayingAudio) {
+        console.log('Toque bloqueado:', { languageSet: !!language, isProcessingTouch, isPlayingAudio });
+        return;
+      }
 
       const now = Date.now();
-      if (now - lastTouchTime < 200) return; // Debounce: ignora toques dentro de 300ms
+      if (now - lastTouchTime < 300) {
+        console.log('Toque ignorado por debounce');
+        return;
+      }
       lastTouchTime = now;
       isProcessingTouch = true;
 
@@ -250,7 +272,10 @@
     }
 
     function mousePressed() {
-      if (!language || isProcessingTouch) return;
+      if (!language || isProcessingTouch || isPlayingAudio) {
+        console.log('Clic bloqueado:', { languageSet: !!language, isProcessingTouch, isPlayingAudio });
+        return;
+      }
       touchStarted(); // Reutilizar la lógica de touchStarted para clics de ratón
     }
 

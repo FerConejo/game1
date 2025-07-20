@@ -183,14 +183,31 @@
       redraw();
     }
 
+    //function selectLanguage(lang) {
+     // language = lang;
+      //document.getElementById('language-selector').style.display = 'none';
+     // unlockAudioContext(); // Desbloquear el contexto de audio al seleccionar idioma
+     // resetGrid();
+     // updateScore();
+     // window.loop(); // Reactivar el bucle para dibujar continuamente
+     // updateMessage(messages[lang].welcome);
+    //}
+
     function selectLanguage(lang) {
-      language = lang;
-      document.getElementById('language-selector').style.display = 'none';
-      unlockAudioContext(); // Desbloquear el contexto de audio al seleccionar idioma
-      resetGrid();
-      updateScore();
-      window.loop(); // Reactivar el bucle para dibujar continuamente
-      updateMessage(messages[lang].welcome);
+      try {
+        console.log('Seleccionando idioma:', lang);
+        language = lang;
+        document.getElementById('language-selector').style.display = 'none';
+        unlockAudioContext();
+        preloadAudios(lang, 1, 10); // Precargar audios para la primera ronda
+        resetGrid();
+        updateScore();
+        window.loop();
+        updateMessage(messages[lang].welcome);
+        console.log('Idioma seleccionado:', lang);
+      } catch (error) {
+        console.error('Error en selectLanguage:', error);
+      }
     }
 
     function resetGrid() {

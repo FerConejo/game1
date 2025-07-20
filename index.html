@@ -85,8 +85,7 @@
 
     function speak(text) {
       if (!language || isPlayingAudio) {
-        console.warn('Selecciona un idioma primero o espera a que termine el audio.');
-        return;
+        return; // Evitar advertencias si no hay idioma o audio en curso
       }
 
       isPlayingAudio = true;
@@ -112,12 +111,10 @@
           audio.onended = () => {
             isPlayingAudio = false; // Permitir nuevo audio al terminar
           };
-        }).catch(error => {
-          console.error(`Error al reproducir ${audioFile}:`, error);
-          isPlayingAudio = false;
+        }).catch(() => {
+          isPlayingAudio = false; // Restablecer si hay error
         });
       } catch (error) {
-        console.warn(`No se encontró ${audioFile}`);
         isPlayingAudio = false;
       }
     }
@@ -129,7 +126,6 @@
       canvas.style('display', 'block');
       canvas.style('margin', '0 auto');
       canvas.style('touch-action', 'none'); // Prevenir gestos táctiles no deseados
-      noLoop();
       updateMessage(messages[language]?.welcome || 'Encuentra el número 1');
       resetGrid();
       redraw();
@@ -140,7 +136,7 @@
       document.getElementById('language-selector').style.display = 'none';
       resetGrid();
       updateScore();
-      window.loop();
+      window.loop(); // Reactivar el bucle para dibujar continuamente
       updateMessage(messages[lang].welcome);
     }
 
@@ -192,10 +188,10 @@
     }
 
     function touchStarted() {
-      if (!language || isProcessingTouch) return false;
+      if (!language || isProcessingTouch) return;
 
       const now = Date.now();
-      if (now - lastTouchTime < 300) return false; // Debounce: ignora toques dentro de 300ms
+      if (now - lastTouchTime < 300) return; // Debounce: ignora toques dentro de 300ms
       lastTouchTime = now;
       isProcessingTouch = true;
 
@@ -227,11 +223,10 @@
         }
       }
 
-      setTimeout(() => {
-        isProcessingTouch = false; // Resetear después de 300ms
-      }, 300);
-
-      return false; // Prevenir comportamiento por defecto
+      isProcessingTouch = false; // Restablecer inmediatamente para permitir nuevos toques
+      if (touches.length > 0) {
+        touches[0].preventDefault(); // Prevenir comportamiento por defecto del navegador
+      }
     }
 
     function mousePressed() {
@@ -248,13 +243,12 @@
     function updateScore() {
       const scoreText = messages[language]?.score(score) || `Puntuación: ${score}`;
       document.getElementById('score').innerText = scoreText;
-      // No llamar a speak aquí para evitar duplicaciones
     }
 
     function updateMessage(text) {
       message = text;
       document.getElementById('message').innerText = text;
-      speak(text); // Solo llamar a speak desde updateMessage
+      speak(text);
     }
 
     // Registrar el service worker

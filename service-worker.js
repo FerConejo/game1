@@ -5,6 +5,7 @@ const urlsToCache = [
   './style.css',
   './icon-192.png',
   './icon-512.png',
+  './favicon.ico',
   'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js',
   // Archivos de audio (ajusta según los archivos que tengas)
   './audio/es/welcome_es.mp3',

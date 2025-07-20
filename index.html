@@ -211,7 +211,7 @@
       if (!language || isProcessingTouch) return;
 
       const now = Date.now();
-      if (now - lastTouchTime < 300) return; // Debounce: ignora toques dentro de 300ms
+      if (now - lastTouchTime < 200) return; // Debounce: ignora toques dentro de 300ms
       lastTouchTime = now;
       isProcessingTouch = true;
 
